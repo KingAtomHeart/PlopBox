@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlopBox</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div class="ui-overlay">
+            <div class="start-screen" id="startScreen">
+                <h1>PlopBox</h1>
+                <div class="instructions">
+                    Click or press SPACE to Jump!<br>
+                </div>
+                <button class="start-btn" id="startBtn">START GAME</button>
+            </div>
+            
+            <div class="game-over-screen" id="gameOverScreen">
+                <h1>GAME OVER</h1>
+                <div class="final-score" id="finalScore">Score: 0</div>
+                <button class="start-btn" id="restartBtn">PLAY AGAIN</button>
+            </div>
+        </div>
+        
+        <div class="score" id="currentScore">0</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #ffffff;
+}
+
+.game-container {
+    position: relative;
+    width: 400px;
+    height: 600px;
+    background: #1a1a1a;
+    border: 2px solid #b2795c;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(178, 121, 92, 0.3);
+}
+
+canvas {
+    display: block;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+}
+
+.ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.start-screen, .game-over-screen {
+    background: rgba(26, 26, 26, 0.95);
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid #b2795c;
+    box-shadow: 0 0 20px rgba(178, 121, 92, 0.3);
+}
+
+.game-over-screen {
+    display: none;
+}
+
+h1 {
+    color: #b2795c;
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(178, 121, 92, 0.5);
+}
+
+.instructions {
+    color: #cccccc;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.score {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(178, 121, 92, 0.5);
+}
+
+.start-btn {
+    background: #b2795c;
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.start-btn:hover {
+    background: #b74b4b;
+    box-shadow: 0 0 15px rgba(183, 75, 75, 0.5);
+}
+
+.final-score {
+    color: #b74b4b;
+    font-size: 20px;
+    margin: 15px 0;
+}
