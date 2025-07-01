@@ -30,15 +30,15 @@ const phaserGemsRequired = 3; // Need 3 gems to activate phaser
 let timeSlowGemsCollected = 0; // Track time slow gems collected
 const timeSlowGemsRequired = 3; // Need 3 gems to activate time slow
 
-// Player object
+// Player object - adjusted for mobile friendliness
 const player = {
     x: 80,
     y: 300,
     width: 24,
     height: 24,
     velocity: 0,
-    jump: -8,
-    gravity: 0.5,
+    jump: -6.5, // Reduced from -8 to -6.5 for lower jump height
+    gravity: 0.35, // Reduced from 0.5 to 0.35 for slower falling
     color: '#b2795c',
     hitPoints: 1,
     maxHitPoints: 1,
@@ -804,7 +804,6 @@ function render() {
 }
 
 // Draw power-up bars at bottom of screen
-// Draw power-up bars at bottom of screen
 function drawPowerUpBars() {
     const barWidth = 120;
     const barHeight = 12;
@@ -985,6 +984,11 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Update player physics for mobile-friendly gameplay
+// Modify these values in your player object:
+// player.jump = -5.5; // Reduced from -6.5 to -5.5 for even lower jump height
+// player.gravity = 0.28; // Reduced from 0.35 to 0.28 for slower falling
 
 // Initialize and start game loop
 init();
