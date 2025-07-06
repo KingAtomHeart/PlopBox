@@ -818,8 +818,18 @@ function startGame() {
 }
 
 // Handle touch events
+// Handle touch events
 function handleTouch(e) {
     e.preventDefault();
+    
+    // Prevent multiple rapid touches
+    if (touchStarted) return;
+    touchStarted = true;
+    
+    // Reset touch flag after a short delay
+    setTimeout(() => {
+        touchStarted = false;
+    }, 100);
     
     if (gameState === 'start') {
         startGame();
@@ -847,8 +857,11 @@ canvas.addEventListener('click', (e) => {
 });
 
 // Touch events for mobile
-canvas.addEventListener('touchstart', handleTouch, { passive: false });
-canvas.addEventListener('touchend', handleTouch, { passive: false });
+// Touch events for mobile - use separate handlers
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleTouch(e);
+}, { passive: false });
 
 // Prevent scrolling on mobile when touching the canvas
 document.addEventListener('touchstart', (e) => {
