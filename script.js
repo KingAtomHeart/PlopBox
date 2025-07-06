@@ -7,10 +7,19 @@ const finalScoreEl = document.getElementById('finalScore');
 const startBtn = document.getElementById('startBtn');
 const restartBtn = document.getElementById('restartBtn');
 
+
+//==============================================================================
+//==============================================================================
+
 // Game state
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
 let score = 0;
-let gameSpeed = 2;
+let gameSpeed = 6;
+let lastTime = 0;
+const targetFPS = 60;
+const frameTime = 1000 / targetFPS;
+const MAX_GAME_SPEED = 8; // Adjust this value to your preference
+let deltaTime = 0;
 
 // Power-up system
 let activePowerUps = {
@@ -37,8 +46,8 @@ const player = {
     width: 24,
     height: 24,
     velocity: 0,
-    jump: -6.5, // Reduced from -8 to -6.5 for lower jump height
-    gravity: 0.35, // Reduced from 0.5 to 0.35 for slower falling
+    jump: -10, // Increased from -6.5 to -12 for higher jump
+    gravity: 0.7, // Increased from 0.35 to 0.8 for faster falling
     color: '#b2795c',
     hitPoints: 1,
     maxHitPoints: 1,
@@ -49,7 +58,7 @@ const player = {
 // Obstacles array
 let obstacles = [];
 const obstacleWidth = 50;
-const obstacleGap = 150;
+const obstacleGap = 180; // Increased from 150 to 180 for bigger vertical gap
 let obstacleSpacing = 200; // Base spacing - will be dynamic
 
 // Particle effects
@@ -64,13 +73,13 @@ let touchStarted = false;
 
 // Calculate dynamic obstacle spacing based on game speed
 function getObstacleSpacing() {
-    // Increase spacing as game speed increases, with extra spacing for moving obstacles
-    const baseSpacing = 200;
-    const speedMultiplier = gameSpeed / 2; // How much faster than initial speed
-    const extraSpacing = Math.max(0, (speedMultiplier - 1) * 50); // Extra space for faster speeds
+    // More generous spacing that scales with speed
+    const baseSpacing = 250; // Increased from 180 to 250
+    const speedMultiplier = gameSpeed / 5;
+    const extraSpacing = Math.max(0, (speedMultiplier - 1) * 80); // Increased from 30 to 80
     
-    // Add even more spacing when moving obstacles are present (score >= 40)
-    const movingObstacleBonus = score >= 40 ? 80 : 0;
+    // More bonus spacing for moving obstacles
+    const movingObstacleBonus = score >= 40 ? 100 : 0; // Increased from 40 to 100
     
     return baseSpacing + extraSpacing + movingObstacleBonus;
 }
@@ -187,31 +196,11 @@ function playPowerUpLostSound() {
     oscillator.stop(audioContext.currentTime + 0.3);
 }
 
-// Create phaser effect particles around player
-function createPhaserTrail() {
-    if (!activePowerUps.phaser.active) return;
-    
-    // Add current player position to trail
-    phaserTrail.push({
-        x: player.x + player.width/2,
-        y: player.y + player.height/2,
-        life: 20, // Trail segment life
-        maxLife: 20
-    });
-    
-    // Limit trail length
-    if (phaserTrail.length > 15) {
-        phaserTrail.shift();
-    }
-}
-
 // Initialize game
 function init() {
     obstacles = [];
     gems = [];
     particles = [];
-    phaserParticles = [];
-    phaserTrail = [];
     player.y = 300;
     player.velocity = 0;
     player.hitPoints = player.maxHitPoints;
@@ -283,11 +272,31 @@ function createParticles(x, y, color) {
         particles.push({
             x: x,
             y: y,
-            vx: (Math.random() - 0.5) * 6,
-            vy: (Math.random() - 0.5) * 6,
-            life: 30,
-            color: color
+            vx: (Math.random() - 0.5) * 8, // Increased velocity range
+            vy: (Math.random() - 0.5) * 8,
+            life: 30 + Math.random() * 20, // Random lifetime
+            color: color || '#b2795c'
         });
+    }
+}
+
+// update particles
+// update particles
+function updateParticles() {
+    // Update regular particles (reverse loop for safe removal)
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+        particle.x += particle.vx * deltaTime;
+        particle.y += particle.vy * deltaTime;
+        particle.life -= deltaTime;
+        
+        // Add gravity effect to particles
+        particle.vy += 0.1 * deltaTime;
+        
+        // Remove dead particles
+        if (particle.life <= 0) {
+            particles.splice(i, 1);
+        }
     }
 }
 
@@ -303,9 +312,9 @@ function activatePowerUp(type) {
             phaserGemsCollected = 0; // Reset counter
             
             updatePlayerColor();
-            // createParticles(player.x + player.width/2, player.y + player.height/2, '#2ecc71');
+            // REMOVE: createParticles(player.x + player.width/2, player.y + player.height/2, '#2ecc71');
             
-            // // Create burst of phaser particles when activated
+            // REMOVE: Create burst of phaser particles when activated
             // for (let i = 0; i < 20; i++) {
             //     const angle = (Math.PI * 2 * i) / 20;
             //     phaserParticles.push({
@@ -331,11 +340,10 @@ function activatePowerUp(type) {
             timeSlowGemsCollected = 0; // Reset counter
             
             updatePlayerColor();
-            // createParticles(player.x + player.width/2, player.y + player.height/2, '#3498db');
+            // REMOVE: createParticles(player.x + player.width/2, player.y + player.height/2, '#3498db');
         }
     }
 }
-
 // Deactivate power-up
 function deactivatePowerUp(type) {
     if (activePowerUps[type]) {
@@ -345,13 +353,13 @@ function deactivatePowerUp(type) {
         // Play power-up lost sound
         playPowerUpLostSound();
         
-        // Create particles to show power-up was lost
+        // REMOVE: Create particles to show power-up was lost
         // createParticles(player.x + player.width/2, player.y + player.height/2, '#e74c3c');
         
-        if (type === 'phaser') {
-            // Clear phaser particles
-            phaserTrail = [];
-        }
+        // REMOVE: if (type === 'phaser') {
+        //     // Clear phaser particles
+        //     phaserTrail = [];
+        // }
         
         // Update player color
         updatePlayerColor();
@@ -377,28 +385,6 @@ function takeDamage() {
     return true; // Trigger game over
 }
 
-// Create continuous phaser particles
-function createPhaserParticles() {
-    if (!activePowerUps.phaser.active) return;
-    
-    // Create particles around player
-    for (let i = 0; i < 3; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 15 + Math.random() * 10;
-        phaserParticles.push({
-            x: player.x + player.width/2 + Math.cos(angle) * distance,
-            y: player.y + player.height/2 + Math.sin(angle) * distance,
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
-            life: 30,
-            maxLife: 30,
-            size: 2 + Math.random() * 2,
-            color: `hsl(${120 + Math.random() * 60}, 90%, 70%)`,
-            glow: true
-        });
-    }
-}
-
 // Update game logic
 function update() {
     if (gameState !== 'playing') return;
@@ -410,8 +396,6 @@ function update() {
             deactivatePowerUp('phaser');
         }
         
-        // Create continuous phaser particles
-        createPhaserParticles();
     }
 
     if (activePowerUps.timeSlow.active) {
@@ -420,37 +404,20 @@ function update() {
             deactivatePowerUp('timeSlow');
         }
     }
-
-    // Create phaser trail
-    createPhaserTrail();
-
-    // Update trail
-    phaserTrail = phaserTrail.filter(segment => {
-        segment.life--;
-        return segment.life > 0;
-    });
-    
-    // Update invulnerability timer
-    if (player.invulnerable) {
-        player.invulnerabilityTimer--;
-        if (player.invulnerabilityTimer <= 0) {
-            player.invulnerable = false;
-        }
-    }
     
     // Update player color
     updatePlayerColor();
 
     // Update player
-    player.velocity += player.gravity;
-    player.y += player.velocity;
+    player.velocity += player.gravity * deltaTime;
+    player.y += player.velocity * deltaTime;
 
     const timeSlowFactor = activePowerUps.timeSlow.active ? 0.3 : 1.0; // 30% speed when active
     const currentGameSpeed = gameSpeed * timeSlowFactor;
 
     // Update gems
     gems.forEach(gem => {
-        gem.x -= currentGameSpeed;
+        gem.x -= currentGameSpeed * deltaTime;
         gem.rotation += 0.1;
     });
 
@@ -459,11 +426,11 @@ function update() {
 
     // Update obstacles
     obstacles.forEach(obstacle => {
-        obstacle.x -= currentGameSpeed;
+        obstacle.x -= currentGameSpeed * deltaTime;
         
         // Update moving obstacles (score >= 40)
         if (obstacle.moving) {
-            const moveAmount = obstacle.moveSpeed * obstacle.moveDirection;
+            const moveAmount = obstacle.moveSpeed * obstacle.moveDirection * deltaTime;
             obstacle.topHeight += moveAmount;
             obstacle.bottomY += moveAmount;
             
@@ -486,7 +453,7 @@ function update() {
             playScoreSound();
             
             // Increase game speed slightly
-            gameSpeed += 0.05;
+            gameSpeed = Math.min(gameSpeed + 0.09, MAX_GAME_SPEED);
             
             // Create celebration particles
             createParticles(player.x + player.width/2, player.y + player.height/2, '#b2795c');
@@ -501,32 +468,10 @@ function update() {
         createObstacle(lastObstacle.x + getObstacleSpacing()); // Use dynamic spacing
     }
 
-    // Update particles
-    particles = particles.filter(particle => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vy += 0.2;
-        particle.life--;
-        return particle.life > 0;
-    });
-
-    // Update phaser particles
-    phaserParticles = phaserParticles.filter(particle => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.life--;
-        
-        // Add slight gravity and slow down
-        particle.vy += 0.1;
-        particle.vx *= 0.98;
-        particle.vy *= 0.98;
-        
-        return particle.life > 0;
-    });
-
     // Check collisions
     checkCollisions();
     checkGemCollisions();
+    updateParticles();
 }
 
 // Check gem collisions
@@ -609,21 +554,21 @@ function render() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw background grid effect
+    // Draw background grid effect (optimized)
     ctx.strokeStyle = 'rgba(178, 121, 92, 0.1)';
     ctx.lineWidth = 1;
+    ctx.beginPath();
+    // Draw all vertical lines
     for (let i = 0; i < canvas.width; i += 40) {
-        ctx.beginPath();
         ctx.moveTo(i, 0);
         ctx.lineTo(i, canvas.height);
-        ctx.stroke();
     }
+    // Draw all horizontal lines
     for (let i = 0; i < canvas.height; i += 40) {
-        ctx.beginPath();
         ctx.moveTo(0, i);
         ctx.lineTo(canvas.width, i);
-        ctx.stroke();
     }
+    ctx.stroke();
 
     // Draw obstacles
     obstacles.forEach(obstacle => {
@@ -702,53 +647,10 @@ function render() {
         ctx.restore();
     });
 
-    // Draw phaser particles first (behind player)
-    if (phaserTrail.length > 1) {
-        ctx.save();
-        for (let i = 0; i < phaserTrail.length - 1; i++) {
-            const segment = phaserTrail[i];
-            const nextSegment = phaserTrail[i + 1];
-            const alpha = segment.life / segment.maxLife;
-            const thickness = 8 * alpha;
-            
-            ctx.globalAlpha = alpha * 0.6;
-            ctx.strokeStyle = '#2ecc71';
-            ctx.lineWidth = thickness;
-            ctx.lineCap = 'round';
-            
-            ctx.beginPath();
-            ctx.moveTo(segment.x, segment.y);
-            ctx.lineTo(nextSegment.x, nextSegment.y);
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
-
     // Draw player with special effects
     if (player.invulnerable && Math.floor(Date.now() / 100) % 2) {
         // Flashing effect when invulnerable
         ctx.globalAlpha = 0.5;
-    }
-    
-    if (activePowerUps.phaser.active) {
-        // Enhanced phaser effect
-        ctx.save();
-        
-        // Draw glowing aura around player
-        const glowSize = 40 + Math.sin(Date.now() * 0.01) * 10;
-        ctx.globalAlpha = 0.2;
-        ctx.fillStyle = '#2ecc71';
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#2ecc71';
-        ctx.beginPath();
-        ctx.arc(player.x + player.width/2, player.y + player.height/2, glowSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-        
-        // Player with pulsing transparency
-        const pulse = Math.sin(Date.now() * 0.02) * 0.3 + 0.5;
-        ctx.globalAlpha = pulse;
     }
     
     ctx.fillStyle = player.color;
@@ -756,7 +658,7 @@ function render() {
     
     // Player glow effect
     ctx.strokeStyle = player.color + '80';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.strokeRect(player.x, player.y, player.width, player.height);
     
     // Enhanced phaser player effect
@@ -778,29 +680,18 @@ function render() {
     drawPowerUpBars();
 
     // Draw regular particles
-    particles.forEach(particle => {
-        const alpha = particle.life / 30;
-        ctx.fillStyle = particle.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
-        ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
-    });
-
-    // Draw phaser particles
-    phaserParticles.forEach(particle => {
-        const alpha = particle.life / particle.maxLife;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        
-        if (particle.glow) {
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = particle.color;
-        }
-        
-        ctx.fillStyle = particle.color;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    });
+    // Draw regular particles (optimized)
+    if (particles.length > 0) {
+        particles.forEach(particle => {
+            const alpha = particle.life / 30;
+            const size = 2 + (particle.life / 30) * 2;
+            
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = particle.color;
+            ctx.fillRect(particle.x - size/2, particle.y - size/2, size, size);
+        });
+        ctx.globalAlpha = 1.0; // Reset alpha once
+    }
 }
 
 // Draw power-up bars at bottom of screen
@@ -885,10 +776,17 @@ function drawPowerUpBars() {
     }
 }
 
-// Game loop
-function gameLoop() {
-    update();
-    render();
+// Game loop with fixed timestep
+function gameLoop(currentTime) {
+    const realDeltaTime = currentTime - lastTime;
+    
+    if (realDeltaTime >= frameTime) {
+        deltaTime = Math.min(realDeltaTime / frameTime, 2); // Reduced cap from 3 to 2 for smoother fast gameplay
+        lastTime = currentTime;
+        
+        update();
+        render();
+    }
     requestAnimationFrame(gameLoop);
 }
 
@@ -985,11 +883,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Update player physics for mobile-friendly gameplay
-// Modify these values in your player object:
-// player.jump = -5.5; // Reduced from -6.5 to -5.5 for even lower jump height
-// player.gravity = 0.28; // Reduced from 0.35 to 0.28 for slower falling
-
 // Initialize and start game loop
 init();
-gameLoop();
+requestAnimationFrame(gameLoop);
